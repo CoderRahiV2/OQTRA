@@ -31,10 +31,22 @@ export default async (req) => {
       imageKey = `demo-${cleanText(b.id,80) || Date.now().toString(36)}-${Date.now().toString(36)}`;
       await store("nova-demo-images").set(imageKey, bytes, { metadata: { contentType: `image/${match[1] === "jpeg" ? "jpeg" : match[1]}` } });
     }
+    let videoKey = "";
+    if (b.videoData) {
+      const match = String(b.videoData).match(/^data:video\/(mp4|webm);base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return json({ error: "Upload an MP4 or WebM short video." }, 400);
+      const bytes = Buffer.from(match[2], "base64");
+      if (!bytes.length || bytes.length > 3_500_000) return json({ error: "Short video must be smaller than 3.5 MB. Use YouTube for larger videos." }, 400);
+      videoKey = `demo-video-${cleanText(b.id,80) || Date.now().toString(36)}-${Date.now().toString(36)}`;
+      await store("nova-demo-videos").set(videoKey, bytes, { metadata: { contentType: match[1] === "webm" ? "video/webm" : "video/mp4" } });
+    }
+    const youtubeUrl = safeUrl(b.youtubeUrl);
+    if (b.youtubeUrl && (!youtubeUrl || !/(youtube\.com|youtu\.be)/i.test(new URL(youtubeUrl).hostname))) return json({ error: "Please enter a valid YouTube URL." }, 400);
     if (!title || !description) return json({ error: "Project title and description are required." }, 400);
     if (b.projectUrl && !projectUrl) return json({ error: "Please use a valid http(s) project link." }, 400);
     const db = store("nova-demos"), projects = await db.get("projects", { type: "json" }) || [];
-    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, imageKey: imageKey || (projects.find(x=>x.id===cleanText(b.id,80))?.imageKey || ""), updatedAt:new Date().toISOString() };
+    const previous = projects.find(x=>x.id===cleanText(b.id,80));
+    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, youtubeUrl, imageKey: imageKey || previous?.imageKey || "", videoKey: videoKey || previous?.videoKey || "", updatedAt:new Date().toISOString() };
     const index=projects.findIndex(x=>x.id===project.id); if(index>=0) projects[index]=project; else projects.unshift(project);
     await db.setJSON("projects",projects); return json({success:true,projects});
   }
@@ -42,6 +54,7 @@ export default async (req) => {
     const db=store("nova-demos"), projects=await db.get("projects",{type:"json"})||[];
     const target=projects.find(x=>x.id===cleanText(b.id,80));
     if(target?.imageKey) await store("nova-demo-images").delete(target.imageKey);
+    if(target?.videoKey) await store("nova-demo-videos").delete(target.videoKey);
     await db.setJSON("projects",projects.filter(x=>x.id!==cleanText(b.id,80))); return json({success:true});
   }
   if (action === "service-descriptions-save") {
