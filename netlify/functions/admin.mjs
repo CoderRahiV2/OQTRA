@@ -22,15 +22,26 @@ export default async (req) => {
     const title = cleanText(b.title, 100), description = cleanText(b.description, 1200), category = cleanText(b.category, 50);
     const safeUrl = (value) => { const v = cleanText(value, 500); if (!v) return ""; try { const u = new URL(v); return ["http:","https:"].includes(u.protocol) ? u.toString() : ""; } catch { return ""; } };
     const projectUrl = safeUrl(b.projectUrl);
+    let imageKey = cleanText(b.imageKey, 100);
+    if (b.imageData) {
+      const match = String(b.imageData).match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return json({ error: "Upload a JPG, PNG or WebP screenshot." }, 400);
+      const bytes = Buffer.from(match[2], "base64");
+      if (!bytes.length || bytes.length > 1_200_000) return json({ error: "Screenshot must be smaller than 1.2 MB after compression." }, 400);
+      imageKey = `demo-${cleanText(b.id,80) || Date.now().toString(36)}-${Date.now().toString(36)}`;
+      await store("nova-demo-images").set(imageKey, bytes, { metadata: { contentType: `image/${match[1] === "jpeg" ? "jpeg" : match[1]}` } });
+    }
     if (!title || !description) return json({ error: "Project title and description are required." }, 400);
     if (b.projectUrl && !projectUrl) return json({ error: "Please use a valid http(s) project link." }, 400);
     const db = store("nova-demos"), projects = await db.get("projects", { type: "json" }) || [];
-    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, updatedAt:new Date().toISOString() };
+    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, imageKey: imageKey || (projects.find(x=>x.id===cleanText(b.id,80))?.imageKey || ""), updatedAt:new Date().toISOString() };
     const index=projects.findIndex(x=>x.id===project.id); if(index>=0) projects[index]=project; else projects.unshift(project);
     await db.setJSON("projects",projects); return json({success:true,projects});
   }
   if (action === "project-delete" || action === "demo-delete") {
     const db=store("nova-demos"), projects=await db.get("projects",{type:"json"})||[];
+    const target=projects.find(x=>x.id===cleanText(b.id,80));
+    if(target?.imageKey) await store("nova-demo-images").delete(target.imageKey);
     await db.setJSON("projects",projects.filter(x=>x.id!==cleanText(b.id,80))); return json({success:true});
   }
   if (action === "service-descriptions-save") {

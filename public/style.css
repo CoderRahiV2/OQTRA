@@ -24,3 +24,5 @@
 
 /* Previous work and verified buyer reviews */
 .review-form-wrap{max-width:720px;margin:46px auto 0}.review-form-wrap .order-card{margin-top:18px}.reviews-section .demo-card small{color:var(--muted)}.review-form-wrap>p{color:var(--muted)}
+
+.demo-work-image{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:9px;margin-bottom:18px;border:1px solid var(--line);background:var(--bg)}
