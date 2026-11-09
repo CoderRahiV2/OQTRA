@@ -2,13 +2,13 @@ const $ = (s) => document.querySelector(s);
 let config = null, selectedCoupon = null, selectedService = null;
 const money = n => "৳" + Number(n || 0).toLocaleString("en-BD");
 const phone = n => { let p=String(n||"").replace(/\D/g,""); if(p.startsWith("0"))p="88"+p; else if(!p.startsWith("880"))p="880"+p; return p; };
-function themeInit(){const saved=localStorage.getItem("nova-theme");if(saved)document.documentElement.dataset.theme=saved;$("#themeToggle").textContent=document.documentElement.dataset.theme==="light"?"☾":"☼";}
-$("#themeToggle").addEventListener("click",()=>{const next=document.documentElement.dataset.theme==="light"?"dark":"light";document.documentElement.dataset.theme=next;localStorage.setItem("nova-theme",next);$("#themeToggle").textContent=next==="light"?"☾":"☼";});
+function themeInit(){const saved=localStorage.getItem("oqtra-theme");if(saved)document.documentElement.dataset.theme=saved;$("#themeToggle").textContent=document.documentElement.dataset.theme==="light"?"☾":"☼";}
+$("#themeToggle").addEventListener("click",()=>{const next=document.documentElement.dataset.theme==="light"?"dark":"light";document.documentElement.dataset.theme=next;localStorage.setItem("oqtra-theme",next);$("#themeToggle").textContent=next==="light"?"☾":"☼";});
 $("#menuToggle").addEventListener("click",()=>$("#navLinks")?.classList.toggle("open"));
 async function init(){
  themeInit();$("#year").textContent=new Date().getFullYear();
  try{const r=await fetch("/.netlify/functions/public-config");if(!r.ok)throw Error();config=await r.json();renderConfig();}
- catch(e){$("#serviceGrid").innerHTML='<p class="loading">Could not load services. Please refresh the page.</p>';}
+ catch(e){$("#serviceGrid").innerHTML='<p class="loading">সার্ভিস লোড করা যায়নি। অনুগ্রহ করে পেজটি রিফ্রেশ করুন। / Could not load services.</p>';}
 }
 function renderConfig(){
  const s=config.settings;$("#brandName").textContent=s.brand;$("#footerBrand").textContent=s.brand;$("#footerName").textContent=s.brand;$("#announcement").textContent=s.announcement;
@@ -16,21 +16,39 @@ function renderConfig(){
  const grid=$("#serviceGrid"), select=$("#serviceSelect");
  grid.innerHTML="";select.innerHTML='<option value="">Select a service</option>';
  config.services.forEach(x=>{
-  const card=document.createElement("article");card.className="service-card";
-  card.innerHTML=`<div class="service-top"><span class="service-icon">${x.icon}</span><span class="service-category">${x.category}</span></div><h3>${x.name}</h3><p>${x.description}</p><div class="service-bottom"><div><span class="price-label">${x.unit}</span><span class="service-price">${money(x.price)} <small>BDT</small></span></div><button class="service-choose" data-service="${x.id}">Choose service ↗</button></div>`;
+  const bn=serviceBangla[x.id]||{};
+  const card=document.createElement("article");card.className="service-card";card.tabIndex=0;card.setAttribute("role","link");card.setAttribute("aria-label",`View details for ${x.name}`);
+  card.innerHTML=`<div class="service-top"><span class="service-icon">${x.icon}</span><span class="service-category">${escapeHtml(x.category)}</span></div><h3>${escapeHtml(x.name)}</h3><p>${escapeHtml(x.description)}<br><span class="service-bangla" lang="bn">${escapeHtml(bn.short||"আপনার প্রয়োজন অনুযায়ী সৃজনশীল ও মানসম্মত সমাধান।")}</span></p><div class="service-bottom"><div><span class="price-label">${x.unit} · শুরু</span><span class="service-price">${money(x.price)} <small>BDT</small></span></div><button class="service-choose" type="button" data-details="${x.id}">বিস্তারিত দেখুন / Learn more ↗</button></div>`;
   grid.append(card);const opt=document.createElement("option");opt.value=x.id;opt.textContent=`${x.name} — ${money(x.price)}+`;select.append(opt);
+  card.addEventListener("click",()=>showServiceDetails(x));
+  card.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showServiceDetails(x);}});
  });
- document.querySelectorAll("[data-service]").forEach(b=>b.addEventListener("click",()=>{select.value=b.dataset.service;select.dispatchEvent(new Event("change"));$("#order").scrollIntoView({behavior:"smooth"});}));
  const links=[["Email",s.gmail?`mailto:${s.gmail}`:""],["Facebook",s.facebook],["Instagram",s.instagram],["More",s.otherLink]].filter(x=>x[1]);
  $("#socialLinks").innerHTML=links.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n} ↗</a>`).join("");
  renderDemos(config.demos || []);
  updatePrice();
 }
+
+const serviceBangla={
+ presentation:{short:"অ্যাসাইনমেন্ট, সেমিনার ও ক্লাস প্রেজেন্টেশনের জন্য সুন্দর স্লাইড।",detail:"আপনার টপিক ও নির্দেশনা অনুযায়ী সাজানো, পড়তে সহজ এবং উপস্থাপনায় আত্মবিশ্বাস বাড়ায় এমন স্লাইড তৈরি করা হবে।",includes:["কনটেন্ট অনুযায়ী স্লাইড সাজানো","পরিষ্কার টাইপোগ্রাফি ও ভিজ্যুয়াল হায়ারার্কি","PowerPoint / PDF ফরম্যাটে ডেলিভারি"]},
+ "ai-ad":{short:"আপনার পণ্য বা সার্ভিসের জন্য নজরকাড়া AI বিজ্ঞাপন।",detail:"সোশ্যাল মিডিয়া ও ডিজিটাল প্রচারের জন্য আকর্ষণীয় বিজ্ঞাপনের ধারণা, ভিজ্যুয়াল ও কপি তৈরি করা হবে।",includes:["বিজ্ঞাপনের কনসেপ্ট ও মেসেজিং","AI-সহায়তায় ভিজ্যুয়াল তৈরি","প্ল্যাটফর্ম অনুযায়ী কপি/ক্যাপশন"]},
+ content:{short:"ব্র্যান্ড ও সোশ্যাল মিডিয়ার জন্য লক্ষ্যভিত্তিক কনটেন্ট।",detail:"আপনার অডিয়েন্স, ব্র্যান্ডের টোন এবং কনটেন্টের উদ্দেশ্য অনুযায়ী লেখা ও ক্রিয়েটিভ কনটেন্ট তৈরি করা হবে।",includes:["ক্যাপশন ও পোস্ট কপি","ব্র্যান্ড টোন অনুযায়ী লেখা","প্রয়োজন অনুযায়ী কনটেন্ট আইডিয়া"]},
+ portfolio:{short:"নিজের কাজ ও দক্ষতা তুলে ধরার আধুনিক অনলাইন পোর্টফোলিও।",detail:"শিক্ষার্থী, ফ্রিল্যান্সার ও প্রফেশনালদের জন্য responsive personal portfolio, Netlify hosting-এ প্রকাশের ব্যবস্থা।",includes:["নিজের পরিচিতি ও দক্ষতার সেকশন","প্রজেক্ট/কাজের গ্যালারি ও যোগাযোগ লিংক","মোবাইল-ফ্রেন্ডলি ডিজাইন ও Netlify deployment"]},
+ business:{short:"আপনার ব্যবসার জন্য বিশ্বাসযোগ্য ও প্রফেশনাল ওয়েব উপস্থিতি।",detail:"আপনার সার্ভিস, ব্যবসার তথ্য এবং যোগাযোগের মাধ্যম সুন্দরভাবে তুলে ধরার জন্য দ্রুত ও responsive business website।",includes:["সার্ভিস ও About সেকশন","যোগাযোগ ও সোশ্যাল লিংক","মোবাইল-ফ্রেন্ডলি লেআউট ও basic SEO"]},
+ custom:{short:"আপনার নির্দিষ্ট আইডিয়া ও লক্ষ্য অনুযায়ী কাস্টম ওয়েবসাইট।",detail:"আপনার প্রয়োজন, ফিচার এবং ব্র্যান্ড পরিচয়ের ওপর ভিত্তি করে পরিকল্পিত ওয়েবসাইট। কাজ শুরুর আগে scope ও quotation নিশ্চিত করা হবে।",includes:["প্রয়োজন অনুযায়ী পেজ ও ফিচার","কাস্টম ডিজাইন ও responsive layout","প্রজেক্ট অনুযায়ী deployment ও handover"]}
+};
+function showServiceDetails(service){
+ const d=serviceBangla[service.id]||{};const panel=$("#serviceDetail");
+ panel.innerHTML=`<div class="detail-copy"><span class="eyebrow">${escapeHtml(service.category)} · ${escapeHtml(service.name)}</span><h2>${escapeHtml(service.name)}<br><span class="muted" lang="bn">${escapeHtml(d.short||service.description)}</span></h2><p>${escapeHtml(service.description)}</p><p lang="bn">${escapeHtml(d.detail||service.description)}</p><h3>What you can expect · যা যা পাবেন</h3><ul>${(d.includes||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul><div class="detail-price">Starting at <strong>${money(service.price)}</strong></div><button class="btn btn-primary" id="detailOrder">এই সার্ভিসটি অর্ডার করুন / Order this service ↗</button></div>`;
+ panel.classList.remove("hidden");$("#service-details").scrollIntoView({behavior:"smooth",block:"start"});
+ $("#detailOrder").addEventListener("click",()=>{$("#serviceSelect").value=service.id;$("#serviceSelect").dispatchEvent(new Event("change"));$("#order").scrollIntoView({behavior:"smooth"});});
+}
+
 function renderDemos(demos){
  const grid=$("#demoGrid");
  if(!grid) return;
  if(!demos.length){grid.innerHTML='<div class="demo-empty">Project examples will appear here soon. Check back to explore our videos, live project links and PDF case studies.</div>';return;}
- grid.innerHTML=demos.map(d=>`<article class="demo-card"><div class="demo-card-top"><span class="service-icon">↗</span><span class="demo-tag">${escapeHtml(d.category || "PROJECT")}</span></div><h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description)}</p><div class="demo-actions">${d.videoUrl?`<a href="${safeHref(d.videoUrl)}" target="_blank" rel="noopener">▶ Watch video</a>`:""}<a href="${safeHref(d.projectUrl)}" target="_blank" rel="noopener">↗ View project</a><a href="${safeHref(d.pdfUrl)}" target="_blank" rel="noopener">↓ View PDF</a></div></article>`).join("");
+ grid.innerHTML=demos.map(d=>`<article class="demo-card"><div class="demo-card-top"><span class="service-icon">↗</span><span class="demo-tag">${escapeHtml(d.category || "PROJECT")}</span></div><h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description)}</p><div class="demo-actions">${d.videoUrl?`<a href="${safeHref(d.videoUrl)}" target="_blank" rel="noopener">▶ ভিডিও দেখুন / Watch video</a>`:""}<a href="${safeHref(d.projectUrl)}" target="_blank" rel="noopener">↗ প্রজেক্ট দেখুন / View</a><a href="${safeHref(d.pdfUrl)}" target="_blank" rel="noopener">↓ PDF দেখুন / PDF</a></div></article>`).join("");
 }
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function safeHref(value){try{const u=new URL(value,location.origin);return ["http:","https:"].includes(u.protocol)?u.href:"#";}catch{return "#";}}

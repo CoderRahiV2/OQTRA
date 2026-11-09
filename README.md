@@ -54,3 +54,18 @@ Normal advance: 10% of discounted estimated total, rounded up to the next taka. 
 - Consider periodic exports/backups of order data as your business grows.
 - Add a spam/rate-limit layer before running large paid campaigns.
 - The site uses Google Fonts for typography; system fallback fonts remain available if Google Fonts are blocked.
+
+
+## Bengali, SEO and performance update
+- The public site now uses English and Bangla together, including Bengali service descriptions and FAQ content.
+- Selecting a service card opens its detailed description, included deliverables and an order button that preselects the service.
+- Added page title, meta description, social sharing metadata, ProfessionalService structured data, `robots.txt`, and a sitemap template.
+- The admin page is marked `noindex,nofollow` so it is not intended to appear in search results.
+- Before launch, replace `YOUR-SITE-NAME.netlify.app` in `public/robots.txt` and `public/sitemap.xml` with your real Netlify domain or custom domain. Add the verified domain to Google Search Console and submit `/sitemap.xml`.
+- Google Fonts are loaded with `display=swap`; the duplicate CSS font import was removed. Keep images compressed (WebP/AVIF) and add dimensions/lazy loading if you add image assets later.
+
+
+### OQTRA brand assets
+- `public/logo.svg` — responsive vector logo used in the website header, footer and admin header.
+- `public/favicon.svg` — browser tab icon.
+- `public/og-image.jpg` — social sharing preview image.

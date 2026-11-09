@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" role="img" aria-labelledby="title desc">
+<title id="title">OQTRA</title><desc id="desc">OQTRA — Ideas into impact</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d7ff28"/><stop offset="1" stop-color="#20d66b"/></linearGradient></defs>
+<g transform="translate(8 8)"><circle cx="48" cy="52" r="37" fill="none" stroke="url(#g)" stroke-width="10" stroke-dasharray="190 44" transform="rotate(-38 48 52)"/><path d="M35 35 L69 52 L35 69 Z" fill="url(#g)"/><path d="M8 76 C34 7 91 4 111 27" fill="none" stroke="url(#g)" stroke-width="3.5" stroke-linecap="round"/><path d="M105 20 L115 26 L104 31" fill="none" stroke="#caff24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M88 4 L91 13 L100 16 L91 19 L88 28 L85 19 L76 16 L85 13 Z" fill="#caff24"/></g>
+<text x="145" y="68" fill="#f7f9f5" font-family="Space Grotesk, Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="-3">OQTRA</text>
+<text x="149" y="98" fill="#a8b3a3" font-family="DM Sans, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="6">IDEAS INTO <tspan fill="#baff24">IMPACT</tspan></text>
+</svg>
