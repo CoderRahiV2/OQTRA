@@ -1,0 +1,16 @@
+{
+  "name": "brightstudio-netlify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "node -e \"console.log('Static site ready for Netlify')\""
+  },
+  "dependencies": {
+    "@netlify/blobs": "^9.1.2"
+  },
+  "devDependencies": {
+    "netlify-cli": "^23.5.0"
+  }
+}
