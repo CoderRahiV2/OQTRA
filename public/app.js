@@ -25,7 +25,7 @@ function renderConfig(){
  });
  const links=[["Email",s.gmail?`mailto:${s.gmail}`:""],["Facebook",s.facebook],["Instagram",s.instagram],["More",s.otherLink]].filter(x=>x[1]);
  $("#socialLinks").innerHTML=links.map(([n,u])=>`<a href="${u}" target="_blank" rel="noopener">${n} ↗</a>`).join("");
- renderDemos(config.demos || []);
+ renderProjects(config.projects || []);renderReviews(config.reviews || []);
  updatePrice();
 }
 
@@ -38,18 +38,19 @@ const serviceBangla={
  custom:{short:"আপনার নির্দিষ্ট আইডিয়া ও লক্ষ্য অনুযায়ী কাস্টম ওয়েবসাইট।",detail:"আপনার প্রয়োজন, ফিচার এবং ব্র্যান্ড পরিচয়ের ওপর ভিত্তি করে পরিকল্পিত ওয়েবসাইট। কাজ শুরুর আগে scope ও quotation নিশ্চিত করা হবে।",includes:["প্রয়োজন অনুযায়ী পেজ ও ফিচার","কাস্টম ডিজাইন ও responsive layout","প্রজেক্ট অনুযায়ী deployment ও handover"]}
 };
 function showServiceDetails(service){
- const d=serviceBangla[service.id]||{};const panel=$("#serviceDetail");
+ const d={...(serviceBangla[service.id]||{}),...service};const panel=$("#serviceDetail");
  panel.innerHTML=`<div class="detail-copy"><span class="eyebrow">${escapeHtml(service.category)} · ${escapeHtml(service.name)}</span><h2>${escapeHtml(service.name)}<br><span class="muted" lang="bn">${escapeHtml(d.short||service.description)}</span></h2><p>${escapeHtml(service.description)}</p><p lang="bn">${escapeHtml(d.detail||service.description)}</p><h3>What you can expect · যা যা পাবেন</h3><ul>${(d.includes||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul><div class="detail-price">Starting at <strong>${money(service.price)}</strong></div><button class="btn btn-primary" id="detailOrder">এই সার্ভিসটি অর্ডার করুন / Order this service ↗</button></div>`;
  panel.classList.remove("hidden");$("#service-details").scrollIntoView({behavior:"smooth",block:"start"});
  $("#detailOrder").addEventListener("click",()=>{$("#serviceSelect").value=service.id;$("#serviceSelect").dispatchEvent(new Event("change"));$("#order").scrollIntoView({behavior:"smooth"});});
 }
 
-function renderDemos(demos){
- const grid=$("#demoGrid");
- if(!grid) return;
- if(!demos.length){grid.innerHTML='<div class="demo-empty">Project examples will appear here soon. Check back to explore our videos, live project links and PDF case studies.</div>';return;}
- grid.innerHTML=demos.map(d=>`<article class="demo-card"><div class="demo-card-top"><span class="service-icon">↗</span><span class="demo-tag">${escapeHtml(d.category || "PROJECT")}</span></div><h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description)}</p><div class="demo-actions">${d.videoUrl?`<a href="${safeHref(d.videoUrl)}" target="_blank" rel="noopener">▶ ভিডিও দেখুন / Watch video</a>`:""}<a href="${safeHref(d.projectUrl)}" target="_blank" rel="noopener">↗ প্রজেক্ট দেখুন / View</a><a href="${safeHref(d.pdfUrl)}" target="_blank" rel="noopener">↓ PDF দেখুন / PDF</a></div></article>`).join("");
+function renderProjects(projects){
+ const grid=$("#projectGrid"); if(!grid)return;
+ if(!projects.length){grid.innerHTML='<div class="demo-empty">আগের কাজের তথ্য শিগগিরই এখানে যোগ করা হবে। Previous work will appear here soon.</div>';return;}
+ grid.innerHTML=projects.map(d=>`<article class="demo-card"><div class="demo-card-top"><span class="service-icon">↗</span><span class="demo-tag">${escapeHtml(d.category||"PREVIOUS WORK")}</span></div><h3>${escapeHtml(d.title)}</h3><p>${escapeHtml(d.description)}</p>${d.projectUrl?`<div class="demo-actions"><a href="${safeHref(d.projectUrl)}" target="_blank" rel="noopener">↗ লাইভ প্রজেক্ট দেখুন / View project</a></div>`:""}</article>`).join("");
 }
+function renderReviews(reviews){const grid=$("#reviewGrid");if(!grid)return;if(!reviews.length){grid.innerHTML='<div class="demo-empty">এখনো কোনো verified buyer review প্রকাশিত হয়নি।</div>';return;}grid.innerHTML=reviews.map(r=>`<article class="demo-card"><div class="demo-card-top"><span class="demo-tag">VERIFIED BUYER</span><span>${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</span></div><h3>${escapeHtml(r.name)}</h3><p>${escapeHtml(r.message)}</p><small>${escapeHtml(r.serviceId||"")} · Verified completed order</small></article>`).join("");}
+$("#reviewForm")?.addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget,btn=form.querySelector("button[type=submit]"),status=$("#reviewStatus");btn.disabled=true;status.textContent="Submitting review…";try{const payload=Object.fromEntries(new FormData(form).entries());const r=await fetch("/.netlify/functions/reviews",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw Error(d.error||"Could not submit review.");status.textContent=d.message;form.reset();}catch(err){status.textContent=err.message;}finally{btn.disabled=false;}});
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function safeHref(value){try{const u=new URL(value,location.origin);return ["http:","https:"].includes(u.protocol)?u.href:"#";}catch{return "#";}}
 

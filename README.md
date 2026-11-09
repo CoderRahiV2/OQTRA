@@ -69,3 +69,9 @@ Normal advance: 10% of discounted estimated total, rounded up to the next taka. 
 - `public/logo.svg` — responsive vector logo used in the website header, footer and admin header.
 - `public/favicon.svg` — browser tab icon.
 - `public/og-image.jpg` — social sharing preview image.
+
+
+## Previous work and verified reviews
+- Manage previous projects from Admin → Previous work. Only title, description and an optional live project URL are required; no PDF or video is required.
+- Manage English/Bangla service descriptions from Admin → Service descriptions.
+- Buyers can submit a review only when their order status is Completed and their WhatsApp number matches the order. Each completed order can submit one review. Reviews require admin approval before public display.

@@ -11,34 +11,39 @@ export default async (req) => {
     }
     if (action === "coupons") return json({ coupons: await store("nova-coupons").get("coupons", { type: "json" }) || [] });
     if (action === "settings") return json({ settings: await getSettings(), prices: await getPrices() });
-    if (action === "demos") return json({ demos: await store("nova-demos").get("projects", { type: "json" }) || [] });
+    if (action === "projects" || action === "demos") return json({ projects: await store("nova-demos").get("projects", { type: "json" }) || [] });
+    if (action === "service-descriptions") return json({ services, descriptions: await store("nova-services").get("descriptions", { type: "json" }) || {} });
+    if (action === "reviews") return json({ reviews: await store("nova-reviews").get("reviews", { type: "json" }) || [] });
     return json({ ok: true, services });
   }
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   const b = await readBody(req);
-  if (action === "demo-save") {
-    const title = cleanText(b.title, 100);
-    const description = cleanText(b.description, 1200);
-    const category = cleanText(b.category, 50);
-    const safeUrl = (value) => {
-      const v = cleanText(value, 500);
-      if (!v) return "";
-      try { const u = new URL(v); return ["http:", "https:"].includes(u.protocol) ? u.toString() : ""; } catch { return ""; }
-    };
-    const videoUrl = safeUrl(b.videoUrl), projectUrl = safeUrl(b.projectUrl), pdfUrl = safeUrl(b.pdfUrl);
-    if (!title || !description || !projectUrl || !pdfUrl) return json({ error: "Title, description, project link and PDF link are required. Use valid http(s) URLs." }, 400);
-    if ((b.videoUrl && !videoUrl) || !projectUrl || !pdfUrl) return json({ error: "Please use valid http(s) links." }, 400);
-    const db = store("nova-demos"), demos = await db.get("projects", { type: "json" }) || [];
-    const demo = { id: cleanText(b.id, 80) || ("DM-" + Date.now().toString(36).toUpperCase()), title, description, category, videoUrl, projectUrl, pdfUrl, updatedAt: new Date().toISOString() };
-    const index = demos.findIndex(x => x.id === demo.id);
-    if (index >= 0) demos[index] = demo; else demos.unshift(demo);
-    await db.setJSON("projects", demos);
-    return json({ success: true, demos });
+  if (action === "project-save" || action === "demo-save") {
+    const title = cleanText(b.title, 100), description = cleanText(b.description, 1200), category = cleanText(b.category, 50);
+    const safeUrl = (value) => { const v = cleanText(value, 500); if (!v) return ""; try { const u = new URL(v); return ["http:","https:"].includes(u.protocol) ? u.toString() : ""; } catch { return ""; } };
+    const projectUrl = safeUrl(b.projectUrl);
+    if (!title || !description) return json({ error: "Project title and description are required." }, 400);
+    if (b.projectUrl && !projectUrl) return json({ error: "Please use a valid http(s) project link." }, 400);
+    const db = store("nova-demos"), projects = await db.get("projects", { type: "json" }) || [];
+    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, updatedAt:new Date().toISOString() };
+    const index=projects.findIndex(x=>x.id===project.id); if(index>=0) projects[index]=project; else projects.unshift(project);
+    await db.setJSON("projects",projects); return json({success:true,projects});
   }
-  if (action === "demo-delete") {
-    const db = store("nova-demos"), demos = await db.get("projects", { type: "json" }) || [];
-    await db.setJSON("projects", demos.filter(x => x.id !== cleanText(b.id, 80)));
-    return json({ success: true });
+  if (action === "project-delete" || action === "demo-delete") {
+    const db=store("nova-demos"), projects=await db.get("projects",{type:"json"})||[];
+    await db.setJSON("projects",projects.filter(x=>x.id!==cleanText(b.id,80))); return json({success:true});
+  }
+  if (action === "service-descriptions-save") {
+    const allowed = new Set(services.map(x=>x.id)), next = {};
+    for (const [id, value] of Object.entries(b.descriptions || {})) if (allowed.has(id)) {
+      next[id] = { description:cleanText(value.description,500), short:cleanText(value.short,300), detail:cleanText(value.detail,1200), includes:Array.isArray(value.includes)?value.includes.slice(0,12).map(x=>cleanText(x,160)).filter(Boolean):[] };
+    }
+    await store("nova-services").setJSON("descriptions",next); return json({success:true});
+  }
+  if (action === "review-moderate") {
+    const db=store("nova-reviews"), reviews=await db.get("reviews",{type:"json"})||[];
+    const review=reviews.find(x=>x.id===cleanText(b.id,80)); if(!review) return json({error:"Review not found."},404);
+    review.approved=Boolean(b.approved); review.moderatedAt=new Date().toISOString(); await db.setJSON("reviews",reviews); return json({success:true});
   }
   if (action === "coupon-save") {
     const code = cleanText(b.code, 32).toUpperCase().replace(/\s+/g, "");
