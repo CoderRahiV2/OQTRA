@@ -75,3 +75,7 @@ Normal advance: 10% of discounted estimated total, rounded up to the next taka. 
 - Manage previous projects from Admin → Previous work. Only title, description and an optional live project URL are required; no PDF or video is required.
 - Manage English/Bangla service descriptions from Admin → Service descriptions.
 - Buyers can submit a review only when their order status is Completed and their WhatsApp number matches the order. Each completed order can submit one review. Reviews require admin approval before public display.
+
+
+### Demo Work optional fields
+Only the Demo Work project name is required. Category, description, screenshot, short MP4/WebM video, YouTube URL, live project URL, and PDF upload are optional. PDF uploads are limited to 3.5 MB per file and are stored in Netlify Blobs.

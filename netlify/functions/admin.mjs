@@ -22,6 +22,7 @@ export default async (req) => {
     const title = cleanText(b.title, 100), description = cleanText(b.description, 1200), category = cleanText(b.category, 50);
     const safeUrl = (value) => { const v = cleanText(value, 500); if (!v) return ""; try { const u = new URL(v); return ["http:","https:"].includes(u.protocol) ? u.toString() : ""; } catch { return ""; } };
     const projectUrl = safeUrl(b.projectUrl);
+    if (!title) return json({ error: "Project name is required." }, 400);
     let imageKey = cleanText(b.imageKey, 100);
     if (b.imageData) {
       const match = String(b.imageData).match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);
@@ -40,13 +41,21 @@ export default async (req) => {
       videoKey = `demo-video-${cleanText(b.id,80) || Date.now().toString(36)}-${Date.now().toString(36)}`;
       await store("nova-demo-videos").set(videoKey, bytes, { metadata: { contentType: match[1] === "webm" ? "video/webm" : "video/mp4" } });
     }
+    let pdfKey = "";
+    if (b.pdfData) {
+      const match = String(b.pdfData).match(/^data:application\/pdf;base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return json({ error: "Upload a valid PDF file." }, 400);
+      const bytes = Buffer.from(match[1], "base64");
+      if (!bytes.length || bytes.length > 3_500_000 || bytes.subarray(0,5).toString() !== "%PDF-") return json({ error: "PDF must be a valid file smaller than 3.5 MB." }, 400);
+      pdfKey = `demo-pdf-${cleanText(b.id,80) || Date.now().toString(36)}-${Date.now().toString(36)}`;
+      await store("nova-demo-pdfs").set(pdfKey, bytes, { metadata: { contentType: "application/pdf" } });
+    }
     const youtubeUrl = safeUrl(b.youtubeUrl);
     if (b.youtubeUrl && (!youtubeUrl || !/(youtube\.com|youtu\.be)/i.test(new URL(youtubeUrl).hostname))) return json({ error: "Please enter a valid YouTube URL." }, 400);
-    if (!title || !description) return json({ error: "Project title and description are required." }, 400);
     if (b.projectUrl && !projectUrl) return json({ error: "Please use a valid http(s) project link." }, 400);
     const db = store("nova-demos"), projects = await db.get("projects", { type: "json" }) || [];
     const previous = projects.find(x=>x.id===cleanText(b.id,80));
-    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, youtubeUrl, imageKey: imageKey || previous?.imageKey || "", videoKey: videoKey || previous?.videoKey || "", updatedAt:new Date().toISOString() };
+    const project = { id: cleanText(b.id,80) || ("PR-"+Date.now().toString(36).toUpperCase()), title, description, category, projectUrl, youtubeUrl, imageKey: imageKey || previous?.imageKey || "", videoKey: videoKey || previous?.videoKey || "", pdfKey: pdfKey || previous?.pdfKey || "", updatedAt:new Date().toISOString() };
     const index=projects.findIndex(x=>x.id===project.id); if(index>=0) projects[index]=project; else projects.unshift(project);
     await db.setJSON("projects",projects); return json({success:true,projects});
   }
@@ -55,6 +64,7 @@ export default async (req) => {
     const target=projects.find(x=>x.id===cleanText(b.id,80));
     if(target?.imageKey) await store("nova-demo-images").delete(target.imageKey);
     if(target?.videoKey) await store("nova-demo-videos").delete(target.videoKey);
+    if(target?.pdfKey) await store("nova-demo-pdfs").delete(target.pdfKey);
     await db.setJSON("projects",projects.filter(x=>x.id!==cleanText(b.id,80))); return json({success:true});
   }
   if (action === "service-descriptions-save") {

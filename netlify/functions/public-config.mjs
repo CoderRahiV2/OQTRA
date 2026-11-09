@@ -9,7 +9,7 @@ export default async () => {
   return json({
     settings,
     services: services.map(s => ({ ...s, price: prices[s.id], ...(descriptions?.[s.id] || {}) })),
-    projects: (projects || []).map(x => ({ id:x.id, title:x.title, category:x.category, description:x.description, projectUrl:x.projectUrl || "", youtubeUrl:x.youtubeUrl || "", imageUrl:x.imageKey ? `/.netlify/functions/demo-image?id=${encodeURIComponent(x.imageKey)}` : "", videoUrl:x.videoKey ? `/.netlify/functions/demo-video?id=${encodeURIComponent(x.videoKey)}` : "" })),
+    projects: (projects || []).map(x => ({ id:x.id, title:x.title, category:x.category, description:x.description, projectUrl:x.projectUrl || "", youtubeUrl:x.youtubeUrl || "", imageUrl:x.imageKey ? `/.netlify/functions/demo-image?id=${encodeURIComponent(x.imageKey)}` : "", videoUrl:x.videoKey ? `/.netlify/functions/demo-video?id=${encodeURIComponent(x.videoKey)}` : "", pdfUrl:x.pdfKey ? `/.netlify/functions/demo-pdf?id=${encodeURIComponent(x.pdfKey)}` : "" })),
     reviews: (reviews || []).filter(x => x.approved).sort((a,b) => b.createdAt.localeCompare(a.createdAt))
   });
 };
